@@ -26,7 +26,7 @@ const { MessageMenuOption, MessageMenu } = require("discord-buttons");
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = '';
+const token = 'OTUxNzQ0MTgwOTUzMTc0MDQ2.Yir61w.EiJrnzUbpLErzJBzL6BYQV8dqWc';
 const config = {
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
 	Music: {
@@ -51,8 +51,8 @@ const config = {
 			},	
 		],
 		spotify: {
-			clientID: "",
-			clientSecret: "",
+			clientID: "74354de9255e43abab3fdc86c0064fb7",
+			clientSecret: "eb0f21f5f28840ef91358c26d4c2d9f0",
 		},
 		embed: {
 			default: {
@@ -111,7 +111,7 @@ manager.on("nodeConnect", node =>{
 	console.log(chalk.bold.blue("[Nodes] ") + chalk.bold.white(`Node ${node.options.identifier} Connected!`));
 });
 manager.on("nodeError", (node, error) =>{
-	console.log(chalk.bold.blue("[Nodes] ") + chalk.bold.white(`Node ${node.options.identifier} had an  `) + chalk.bold.bgRedBright(" Error ") + chalk.bold.white(' : ') + chalk.bold.redBright(`${error.message}`));
+	console.log(chalk.bold.blue("[Nodes] ") + chalk.bold.white(`Node ${node.options.identifier} had an `) + chalk.bold.bgRedBright(" Error ") + chalk.bold.white(' : ') + chalk.bold.redBright(`${error.message}`));
 });
 manager.on('nodeDisconnect', (node) =>{
 	console.log(chalk.bold.blue("[Nodes] ") + chalk.bold.white(`Node ${node.options.identifier} Disconnected!`));
