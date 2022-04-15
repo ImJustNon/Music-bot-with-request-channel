@@ -1,7 +1,7 @@
 /**
  * Docs
  * 
- * npm install discord.js@~12.5.3 erela.js @discordjs/voice erela.js-filters discord-buttons quickmongo erela.js-apple erela.js-deezer erela.js-facebook erela.js-spotify chalk@~4.1.2
+ * npm install discord.js@~12.5.3 erela.js erela.js-filters discord-buttons quickmongo erela.js-apple erela.js-deezer erela.js-facebook erela.js-spotify chalk@~4.1.2
  *
  * add token and provide prefix
  * if you have own lavalink you can add your own and set secure to **FALSE**
@@ -26,7 +26,7 @@ const { MessageMenuOption, MessageMenu } = require("discord-buttons");
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = '';
+const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.3SntPDEKp2zk8PuE6p8_7e1kEmA'; //OTUxNzQ0MTgwOTUzMTc0MDQ2.Yir61w.BUNTgFa5H4QNsf8Rn9HSfPf8Wjw
 const config = {
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
 	Music: {
@@ -41,18 +41,54 @@ const config = {
 				retryDelay: 3000,
 			},
 			{
-				identifier: "sub",
-				host: "lavalink-1.nonnyha5.repl.co", 
+				identifier: "1",
+				host: "node1.kartadharta.xyz", 
 				port: 443,
-				password: "reirin",
+				password: "kdlavalink",
 				secure: true,
 				retryAmount: Infinity,
-				retryDelay: 15000,
+				retryDelay: 3000,
+			},
+			{
+				identifier: "2",
+				host: "usui-linku.kadantte.moe", 
+				port: 443,
+				password: "Usui#0256",
+				secure: true,
+				retryAmount: Infinity,
+				retryDelay: 3000,
+			},
+			{
+				identifier: "3",
+				host: "node01.marshalxp.xyz", 
+				port: 443,
+				password: "marshal",
+				secure: true,
+				retryAmount: Infinity,
+				retryDelay: 3000,
+			},
+			{
+				identifier: "4",
+				host: "node02.marshalxp.xyz", 
+				port: 443,
+				password: "marshal",
+				secure: true,
+				retryAmount: Infinity,
+				retryDelay: 3000,
+			},
+			{
+				identifier: "5",
+				host: "node03.marshalxp.xyz", 
+				port: 443,
+				password: "marshal",
+				secure: true,
+				retryAmount: Infinity,
+				retryDelay: 3000,
 			},	
 		],
 		spotify: {
-			clientID: "",
-			clientSecret: "",
+			clientID: "74354de9255e43abab3fdc86c0064fb7",
+			clientSecret: "eb0f21f5f28840ef91358c26d4c2d9f0",
 		},
 		embed: {
 			default: {
@@ -237,7 +273,8 @@ client.on("raw", (d) =>{
 
 client.on("message", async (message) =>{
 	if(message.author.bot) return;
-    let args = message.content.slice(await get_prefix(message.guild.id).length).trim().split(/ +/g);
+	let thisPrefix = await get_prefix(message.guild.id);
+    let args = message.content.slice(thisPrefix.length).trim().split(/ +/g);
     let cmd = args.shift().toLowerCase();
 	
 	// if channel is Music channel
