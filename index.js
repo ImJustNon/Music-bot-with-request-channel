@@ -9,34 +9,47 @@
  */
 
 
-
-//========================= import =================
-const { Client, MessageEmbed } = require("discord.js");
-const { Manager } = require("erela.js");
-const { Database } = require("quickmongo");
-const chalk = require("chalk");
-
-//========================= Create Client =========================
-const client = new Client();
-//========================= Import Discord-butons ========================= 
-require('discord-buttons')(client);
-const { MessageActionRow, MessageButton } = require("discord-buttons");
-const { MessageMenuOption, MessageMenu } = require("discord-buttons");
-
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.3SntPDEKp2zk8PuE6p8_7e1kEmA'; //OTUxNzQ0MTgwOTUzMTc0MDQ2.Yir61w.BUNTgFa5H4QNsf8Rn9HSfPf8Wjw
+const token = 'OTUxNzQ0MTgwOTUzMTc0MDQ2.Yir61w.BUNTgFa5H4QNsf8Rn9HSfPf8Wjw'; //
 const config = {
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
 	Music: {
 		nodes: [
 			{
 				identifier: "main",
-				host: "usui-linku.kadantte.moe", 
+				host: "usui-linku.kadantte.moe",
 				port: 443,
 				password: "Usui#0256",
 				secure: true,
+				retryAmount: Infinity,
+				retryDelay: 3000,
+			},
+			{
+				identifier: "sub1",
+				host: "node1.kartadharta.xyz",
+				port: 443,
+				password: "kdlavalink",
+				secure: true,
+				retryAmount: Infinity,
+				retryDelay: 3000,
+			},
+			{
+				identifier: "sub2",
+				host: "lavalink.islantay.tk",
+				port: 8880,
+				password: "waifufufufu",
+				secure: false,
+				retryAmount: Infinity,
+				retryDelay: 3000,
+			},
+			{
+				identifier: "sub3",
+				host: "uk1.buckytm.com",
+				port: 28112,
+				password: "f82263yh75f6r5",
+				secure: false,
 				retryAmount: Infinity,
 				retryDelay: 3000,
 			},
@@ -47,8 +60,9 @@ const config = {
 		},
 		embed: {
 			default: {
-				color: 'RANDOM',
-				defaultimage: 'https://c.tenor.com/Wgo-XGZmUNAAAAAC/music-listening-to-music.gif',
+				color: '#fa5c00', //RANDOM
+				defaultimage: 'https://cdn.discordapp.com/attachments/887363452304261140/964737487383711764/standard_7.gif',
+				banner: 'https://cdn.discordapp.com/attachments/887363452304261140/964713073527099392/standard_4.gif',
 			},
 		},
 	},
@@ -57,7 +71,8 @@ const radioStation = {
 	ecq_18k: 'http://112.121.151.133:8147/live',
 };
 const embed_config = {
-	color: 'RANDOM',
+	color: '#fa5c00', //RANDOM
+	helpBanner: 'https://cdn.discordapp.com/attachments/887363452304261140/964767665157730344/standard_8.gif',
 };
 const emoji = {
 	music: ':notes:',
@@ -66,6 +81,22 @@ const emoji = {
 	out: ':outbox_tray:',
 	in: ':inbox_tray:',
 };
+
+//========================= import =================
+const { Client, MessageEmbed } = require("discord.js");
+const { Manager } = require("erela.js");
+const { Database } = require("quickmongo");
+const chalk = require("chalk");
+
+
+//========================= Create Client =========================
+
+const client = new Client();
+//========================= Import Discord-butons ========================= 
+require('discord-buttons')(client);
+const { MessageActionRow, MessageButton } = require("discord-buttons");
+const { MessageMenuOption, MessageMenu } = require("discord-buttons");
+
 
 //========================= Data-Base =========================
 const db = new Database(config.mongoURL);
@@ -228,9 +259,11 @@ client.on("raw", (d) =>{
 
 client.on("message", async (message) =>{
 	if(message.author.bot) return;
-	let thisPrefix = await get_prefix(message.guild.id);
-    let args = message.content.slice(thisPrefix.length).trim().split(/ +/g);
+
+	let guild_prefix = await get_prefix(message.guild.id)
+    let args = message.content.slice(guild_prefix.length).trim().split(/ +/g);
     let cmd = args.shift().toLowerCase();
+	
 	
 	// if channel is Music channel
 	const musicChannel = await db.get(`music_${message.guild.id}_channel`);
@@ -239,7 +272,8 @@ client.on("message", async (message) =>{
 			Music_Channel_Function(client, message, args);
 		}
 	}
-	
+
+	if (!message.content.startsWith(guild_prefix)) return;
 	if(cmd === 'play' || cmd === 'p'){
 		play(client, message, args);
 	}
@@ -291,6 +325,9 @@ client.on("message", async (message) =>{
 	else if(cmd === 'prefix'){
 		Prefix(client, message, args);
 	}
+	else if(cmd === 'seek' || cmd === 'seekto'){
+		seek(client, message, args);
+	}
 	else {
 		if(message.content.startsWith(prefix)){
 			return message.channel.send('⚠ | ฮืมม.. รู้สึกว่าคำสั่งนี้ไม่สามารถใช้ได้หรือไม่มีคำสั่งนี้น่ะ');
@@ -301,16 +338,15 @@ client.on("message", async (message) =>{
 //================================================== Commands ==================================================
 
 const help = async(client, message, args) =>{
-	let help_embed = new MessageEmbed()
+	let home_embed = new MessageEmbed()
 		.setColor(embed_config.color)
 		.setAuthor('📗 หน้าต่างช่วยเหลือ', message.guild.iconURL())
+		.setImage(embed_config.helpBanner)
+	let help_embed = new MessageEmbed()
+		.setColor(embed_config.color)
+		.setAuthor('🎶 คำสั่งเพลง', message.guild.iconURL())
 		.addFields(
 			[
-				{
-					name: `:notes: | \` ${await get_prefix(message.guild.id)}help \``,
-					value: `คำสั่งช่วยเหลือ`, 
-					inline: true,
-				},
 				{
 					name: `:notes: | \` ${await get_prefix(message.guild.id)}play \``,
 					value: `เล่นเพลง`, 
@@ -375,22 +411,7 @@ const help = async(client, message, args) =>{
 					name: `:notes: | \` ${await get_prefix(message.guild.id)}clearqueue \``,
 					value: `ล้างคิวเพลง`, 
 					inline: true,
-				},
-				{
-					name: `:control_knobs: | \` ${await get_prefix(message.guild.id)}filter \``,
-					value: `ฟิลเตอร์เพลง`, 
-					inline: true,
-				},
-				{
-					name: `:gear: | \` ${await get_prefix(message.guild.id)}setup \``,
-					value: `สร้างห้องสำหรับเล่นเพลง`, 
-					inline: true,
-				},
-				{
-					name: `:gear: | \` ${await get_prefix(message.guild.id)}prefix \``,
-					value: `ตั้งค่า Prefix เซิฟเวอร์`, 
-					inline: true,
-				},
+				},	
 			]
 		)
 		.setFooter(`${client.user.tag}`, client.user.displayAvatarURL())
@@ -416,9 +437,82 @@ bassboost , nightcore , vaporwave , pop , soft , treblebass , eightdimension , k
 		])
 		.setFooter(`${client.user.tag}`, client.user.displayAvatarURL())
 		.setTimestamp();
+		
+	let setting_embed = new MessageEmbed()
+		.setAuthor('⚙ คำสั่งตั้งค่า', message.guild.iconURL())
+		.addFields(
+			[
+				{
+					name: `:gear: | \` ${await get_prefix(message.guild.id)}setup \``,
+					value: `สร้างห้องสำหรับเล่นเพลง`, 
+					inline: true,
+				},
+				{
+					name: `:gear: | \` ${await get_prefix(message.guild.id)}prefix \``,
+					value: `ตั้งค่า Prefix เซิฟเวอร์`, 
+					inline: true,
+				},
+			]
+		)
+		.setFooter(`${client.user.tag}`, client.user.displayAvatarURL())
+		.setTimestamp();
 
-	await message.channel.send(help_embed);
-	await message.channel.send(filter_help);
+	let bhome = new MessageButton()
+        .setLabel(`หน้าหลัก`)
+        .setID(`home`)
+        .setStyle(`SUCCESS`)
+        .setEmoji(`🏡`)
+	let bmusic = new MessageButton()
+        .setLabel(`คำสั่งเพลง`)
+        .setID(`music`)
+        .setStyle(`PRIMARY`)
+        .setEmoji(`🎶`)
+	let bfilter = new MessageButton()
+        .setLabel(`คำสั่งฟิลเตอร์`)
+        .setID(`filter`)
+        .setStyle(`PRIMARY`)
+        .setEmoji(`🎛️`)
+	let bsetting = new MessageButton()
+        .setLabel(`คำสั่งตั้งค่า`)
+        .setID(`setting`)
+        .setStyle(`PRIMARY`)
+        .setEmoji(`⚙`)
+	let bclose = new MessageButton()
+		.setLabel(`ปิดหน้าต่าง`)
+		.setID(`close`)
+		.setStyle(`red`)
+		.setEmoji(`❌`)
+	let row = new MessageActionRow()
+		.addComponents(bhome, bmusic, bfilter, bsetting, bclose);
+
+	const filter = ( button ) => button.clicker.id === message.author.id;
+	const MESSAGE = await message.channel.send(home_embed,row);
+	const collector = MESSAGE.createButtonCollector(filter, { time : 60000 });
+	collector.on('collect', async (b) => {
+		if(b.id == 'home'){
+			MESSAGE.edit(home_embed, row);
+		}
+		else if(b.id == 'music'){
+			MESSAGE.edit(help_embed, row);
+		}
+		else if(b.id == 'filter'){
+			MESSAGE.edit(filter_help, row);
+		}
+		else if(b.id == 'setting'){
+			MESSAGE.edit(setting_embed, row);
+		}
+		else if(b.id == 'close'){
+			MESSAGE.delete();
+		}
+		await b.reply.defer()
+	});
+	collector.on('end', async(b) => {
+		if(MESSAGE){
+			MESSAGE.edit(`ดูเหมือนว่าคำสั่งนี้จะหมดเวลาการใช้งานเเล้วน่ะ หากต้องการใช้คำสั่งนี้ต่อโปรดพิมพ์ \` ${await get_prefix(message.guild.id)}help \` อีกครั้งน่ะคะ`).then(async msg =>{
+				await msg.delete({ timeout : 10000 });
+			});
+		}
+	});
 }
 const play = async(client, message, args) =>{
 	let channel = message.member.voice.channel;
@@ -820,6 +914,7 @@ const setup = async(client, message, args) =>{
 				.addComponents(bpause,bskip,bstop,bloop,bshuffle)
 			let row2 = new MessageActionRow()
 				.addComponents(bvolumedown,bvolumeup,bmute)
+			await channel.send(config.Music.embed.default.banner);
 			await channel.send('**คิวเพลง:**\nเข้าช่องเสียง และพิมพ์ชื่อเพลงหรือลิงก์ของเพลง เพื่อเปิดเพลงน่ะ').then(async(msg) => await db.set(`music_${message.guild.id}_queue_message`, msg.id));
             await channel.send(trackEmbed,{components: [row, row2]}).then(async(msg) => await db.set(`music_${message.guild.id}_track_message`, msg.id));
             await message.channel.send(':white_check_mark: ทำการตั้งค่าระบบเพลงเรียบร้อยเเล้ว');
@@ -873,6 +968,29 @@ const Prefix = async(client, message, args) =>{
 				message.channel.send(`✅ ทำการตั้งค่า Prefix เป็น ${args[0]}`);
 			});
 		}
+	}
+}
+const seek = async(client, message, args) =>{
+	const durationPattern = /^[0-5]?[0-9](:[0-5][0-9]){1,2}$/;
+	const duration = args[0];
+
+	let channel = message.member.voice.channel;
+	let player = manager.players.get(message.guild.id);
+	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
+	if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
+	if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
+	if(!duration) return message.channel.send('⚠ | โปรดระบุเวลาที่ตต้องการจะข้ามด้วยน่ะ');
+	if(!player.queue.current.isSeekable) return message.channel.send("⚠ | เพลงนี้ไม่สามารถข้ามได้น่ะ");
+	if(!durationPattern.test(duration)) return message.channel.send("⚠ | โปรดระบุรูปเเบบเวลาให้ถูกต้องด้วยน่ะ");
+	const durationMs = durationToMillis(duration);
+	if(durationMs > player.queue.current.duration) return message.channel.send('⚠ | เวลาที่คุณระบุมาไม่ตรงกับความยาวของเพลงน่ะ');
+
+	try {
+		player.seek(durationMs);
+		message.channel.send(`✅ | ทำการข้ามไปที่ ${convertTime(durationMs)} เรียบร้อยเเล้ว`);
+	} 
+	catch(e){
+		msg.channel.send(`⚠ | เกิดข้อผิดพลาดขึ้นโปรดลองอีกครั้งในภายหลัง`);
 	}
 }
 
@@ -1012,6 +1130,7 @@ client.on('clickButton', async (b) =>{
 	let queueMessageID = await db.get(`music_${b.guild.id}_queue_message`);
 
 	let musicChannel = await client.channels.cache.get(musicChannelID);
+	if(!musicChannel) return;
 	let trackEmbed = await musicChannel.messages.fetch(trackEmbedID);
 	let queueMessage = await musicChannel.messages.fetch(queueMessageID);
 
@@ -1042,16 +1161,19 @@ client.on('clickButton', async (b) =>{
 				player.setTrackRepeat(false)
 				player.setQueueRepeat(true);
 				await musicChannel.send(`:white_check_mark: ทำการเปิดการวนซ้ำเพลงเเบบ \`ทั้งหมด\` เรียบร้อยเเล้ว`).then(async(msg) => await msg.delete({timeout: 5000}));
+				await trackEmbed.edit(track_msg_Embed_loop(client, player, "queue"));
 			}
 			else if(player.queueRepeat && !player.trackRepeat){
 				player.setQueueRepeat(false);
 				player.setTrackRepeat(true);
 				await musicChannel.send(`:white_check_mark: ทำการเปิดการวนซ้ำเพลงเเบบ \`เพลงเดียว\` เรียบร้อยเเล้ว`).then(async(msg) => await msg.delete({timeout: 5000}));
+				await trackEmbed.edit(track_msg_Embed_loop(client, player, "track"));
 			}
 			else if(!player.queueRepeat && player.trackRepeat){
 				player.setQueueRepeat(false);
 				player.setTrackRepeat(false);
 				await musicChannel.send(`:white_check_mark: ทำการปิดวนซ้ำเพลงเรียบร้อยเเล้ว`).then(async(msg) => await msg.delete({timeout: 5000}));
+				await trackEmbed.edit(track_msg_Embed_loop(client, player, "stop"));
 			}
 		}
 		else if(b.id == 'shuffle'){
@@ -1061,7 +1183,7 @@ client.on('clickButton', async (b) =>{
 			else{
 				player.queue.shuffle();
 				await musicChannel.send(':white_check_mark: ทำการสุ่มเรียงรายการคิวใหม่เรียบร้อยเเล้ว').then(async(msg) => await msg.delete({timeout: 5000}));
-				await queueMessage.edit(Queue_message);
+				await queueMessage.edit(queue_msg(client, player));
 			}
 		}
 		else if(b.id == 'voldown'){
@@ -1122,6 +1244,7 @@ process.on('uncaughtExceptionMonitor', async(err, origin) =>{
 client.login(token);
 
 //=========================== tools ============================================
+
 function convertTime(duration){
 	var milliseconds = parseInt((duration % 1000) / 100);
 	var	seconds = parseInt((duration / 1000) % 60);
@@ -1138,6 +1261,9 @@ function convertTime(duration){
 	  return hours + ":" + minutes + ":" + seconds;
 	}
 }
+function durationToMillis(dur){
+	return dur.split(":").map(Number).reduce((acc, curr) => curr + acc * 60) * 1000;
+}
 function track_msg_Embed(client, player){
 	const embed = new MessageEmbed()
 		.setColor(config.Music.embed.default.color)
@@ -1146,6 +1272,35 @@ function track_msg_Embed(client, player){
 		.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
 		.setFooter(client.user.tag)
 		.setTimestamp()
+	return embed;
+}
+function track_msg_Embed_loop(client, player, loop){
+	let embed;
+	if(loop.toLowerCase() === "queue"){
+		embed = new MessageEmbed()
+			.setColor(config.Music.embed.default.color)
+			.setTitle(player.queue.current.title)
+			.setURL(player.queue.current.uri)
+			.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
+			.setFooter(`${client.user.tag}  |  Loop : ทั้งหมด`)
+	}
+	else if(loop.toLowerCase() === "track"){
+		embed = new MessageEmbed()
+			.setColor(config.Music.embed.default.color)
+			.setTitle(player.queue.current.title)
+			.setURL(player.queue.current.uri)
+			.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
+			.setFooter(`${client.user.tag}  |  Loop : เพลงเดียว`)
+	}
+	else if(loop.toLowerCase() === "stop"){
+		embed = new MessageEmbed()
+			.setColor(config.Music.embed.default.color)
+			.setTitle(player.queue.current.title)
+			.setURL(player.queue.current.uri)
+			.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
+			.setFooter(`${client.user.tag}`)
+			.setTimestamp()
+	}
 	return embed;
 }
 function queue_msg(client, player){
@@ -1186,10 +1341,10 @@ function youtubeThumbnail(url, quality){
 		}
 	}
 }
-async function get_prefix(id){
+async function get_prefix(guild_id){
 	let PREFIX;
     try {
-        let fetched = await db.get(`prefix_${id}`);
+        let fetched = await db.get(`prefix_${guild_id}`);
         if (fetched == null) {
             PREFIX = prefix;
         }
