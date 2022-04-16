@@ -12,7 +12,7 @@
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = 'OTUxNzQ0MTgwOTUzMTc0MDQ2.Yir61w.Tys1bB3JNS6oNrDUXInyUBUzaqI'; //
+const token = ''; //
 const config = {
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
