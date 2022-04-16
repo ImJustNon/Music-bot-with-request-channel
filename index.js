@@ -341,6 +341,15 @@ const help = async(client, message, args) =>{
 	let home_embed = new MessageEmbed()
 		.setColor(embed_config.color)
 		.setAuthor('📗 หน้าต่างช่วยเหลือ', message.guild.iconURL())
+		.addFields(
+			[
+				{
+					name: '🟠 | Source Code',
+					value: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
+					inline: true,
+				}
+			]
+		)
 		.setImage(embed_config.helpBanner)
 	let help_embed = new MessageEmbed()
 		.setColor(embed_config.color)
