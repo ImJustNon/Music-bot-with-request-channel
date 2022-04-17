@@ -12,7 +12,7 @@
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.wv_hc6QdbYP09uZFGSMW0TGy8LI'; //
+const token = 'OTUxNzQ0MTgwOTUzMTc0MDQ2.Yir61w.T-rcywV9IaZCeoA7pIOSuqaZatU'; //
 const config = {
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
@@ -20,10 +20,10 @@ const config = {
 		nodes: [
 			{
 				identifier: "main",
-				host: "usui-linku.kadantte.moe",
-				port: 443,
-				password: "Usui#0256",
-				secure: true,
+				host: "uk1.buckytm.com",
+				port: 28112,
+				password: "f82263yh75f6r5",
+				secure: false,
 				retryAmount: Infinity,
 				retryDelay: 3000,
 			},
@@ -213,19 +213,19 @@ client.on("ready", () =>{
 	setInterval(async() =>{
 		if(i === activity.length) i = 0;
 		try{
-			await client.user.setActivity(`${activity[i]}`, {
+			await client.user.setActivity(`${activity[i]} | ${prefix}help | ${client.guilds.cache.size} เซิฟเวอร์`, {
 				type: "STREAMING",
 				url: "https://www.twitch.tv/im_just_non",
 			});
 		}
 		catch(err){
-			await client.user.setActivity(`${activity[i]}`, {
-				type: "LISTENING", 
+			await client.user.setActivity(`${activity[i]} | ${prefix}help | ${client.guilds.cache.size} เซิฟเวอร์`, {
+				type: "STREAMING",
+				url: "https://www.twitch.tv/im_just_non",
 			});
-			console.log(err);
 		}
 		i++
-	},5 * 1000);
+	}, 5 * 1000);
 });
 
 client.on("raw", (d) =>{
@@ -395,6 +395,11 @@ const help = async(client, message, args) =>{
 					name: `:notes: | \` ${await get_prefix(message.guild.id)}clearqueue \``,
 					value: `ล้างคิวเพลง`, 
 					inline: true,
+				},
+				{
+					name: `:notes: | \` ${await get_prefix(message.guild.id)}seek \``,
+					value: `ข้ามเวลาเพลง`, 
+					inline: true,
 				},	
 			]
 		)
@@ -492,7 +497,7 @@ bassboost , nightcore , vaporwave , pop , soft , treblebass , eightdimension , k
 	});
 	collector.on('end', async(b) => {
 		if(MESSAGE){
-			MESSAGE.edit(`ดูเหมือนว่าคำสั่งนี้จะหมดเวลาการใช้งานเเล้วน่ะ หากต้องการใช้คำสั่งนี้ต่อโปรดพิมพ์ \` ${await get_prefix(message.guild.id)}help \` อีกครั้งน่ะคะ`).then(async msg =>{
+			MESSAGE.edit(`ดูเหมือนว่าคำสั่งนี้จะหมดเวลาการใช้งานเเล้วน่ะ หากต้องการใช้คำสั่งนี้ต่อโปรดพิมพ์ \` ${await get_prefix(message.guild.id)}help \` อีกครั้งน่ะ`).then(async msg =>{
 				await msg.delete({ timeout : 10000 });
 			});
 		}
@@ -1297,12 +1302,10 @@ function queue_msg(client, player){
 function youtubeThumbnail(url, quality){
 	if(url){
 		var video_id, thumbnail, result;
-		if(result = url.match(/youtube\.com.*(\?v=|\/embed\/)(.{11})/))
-		{
+		if(result = url.match(/youtube\.com.*(\?v=|\/embed\/)(.{11})/)){
 			video_id = result.pop();
 		}
-		else if(result = url.match(/youtu.be\/(.{11})/))
-		{
+		else if(result = url.match(/youtu.be\/(.{11})/)){
 			video_id = result.pop();
 		}
 
