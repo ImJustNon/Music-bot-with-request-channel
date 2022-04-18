@@ -12,7 +12,7 @@
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.wv_hc6QdbYP09uZFGSMW0TGy8LI'; //
+const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.3OO1YWNQeTaROODNFJDNuSO0yGQ'; //
 const config = {
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
@@ -20,9 +20,9 @@ const config = {
 		nodes: [
 			{
 				identifier: "main",
-				host: "uk1.buckytm.com",
-				port: 28112,
-				password: "f82263yh75f6r5",
+				host: "lavalink.islantay.tk",
+				port: 8880,
+				password: "waifufufufu",
 				secure: false,
 				retryAmount: Infinity,
 				retryDelay: 3000,
