@@ -12,7 +12,7 @@
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = ''; //
+const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.U3rgNSTwI7rmtai-gQDDdhAtwXk'; //
 const config = {
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
@@ -29,8 +29,8 @@ const config = {
         	},
 		],
 		spotify: {
-			clientID: "",
-			clientSecret: "",
+			clientID: "74354de9255e43abab3fdc86c0064fb7",
+			clientSecret: "eb0f21f5f28840ef91358c26d4c2d9f0",
 		},
 		embed: {
 			default: {
