@@ -10,9 +10,10 @@
 
 
 //=============================== Config ========================================
+const { nodes } = require('./lavalink_server.js');
 
 const prefix = '!';
-const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.3OO1YWNQeTaROODNFJDNuSO0yGQ'; //
+const token = 'OTUxNzQ0MTgwOTUzMTc0MDQ2.Yir61w.yb17yfuz8XmYWco_gUXqj0DK_bY'; //
 const config = {
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
@@ -26,7 +27,7 @@ const config = {
 				secure: false,
 				retryAmount: Infinity,
 				retryDelay: 3000,
-			},
+        	},
 		],
 		spotify: {
 			clientID: "74354de9255e43abab3fdc86c0064fb7",
@@ -234,6 +235,7 @@ client.on("raw", (d) =>{
 
 client.on("message", async (message) =>{
 	if(message.author.bot) return;
+	if (message.author.bot || message.channel.type === "dm") return;  
 
 	let guild_prefix = await get_prefix(message.guild.id)
     let args = message.content.slice(guild_prefix.length).trim().split(/ +/g);
@@ -1125,6 +1127,16 @@ client.on('clickButton', async (b) =>{
 
 	let player = await manager.players.get(b.guild.id);
 	if(player){
+		// check if clicker user is not in same channel
+		let GetUser = b.guild.members.cache.find(user => user.id === b.clicker.user.id);
+		if(!GetUser) return; // if user not found
+		let Clicker_Vc = GetUser.voice.channel;
+		if(!Clicker_Vc) return; // if voice channel not found
+		if(b.guild.me.voice.channel && !Clicker_Vc.equals(b.guild.me.voice.channel)) return await GetUser.send(new MessageEmbed().setTitle('💢 ตอนนี้มีคนกำลังใช้งานอยู่น่ะ ลองเข้าช่องเดียวกันเพื่อเปิดเพลงสิ').setColor(embed_config.color).setFooter(client.user.tag).setTimestamp()).then(async(msg) =>{
+			await msg.react('🚫').catch(err => console.log(err));
+			await msg.delete({timeout: 15000});
+		});
+		// check button id
 		if(b.id == 'pause'){
 			if(!player.paused){
 				player.pause(true);
@@ -1155,14 +1167,18 @@ client.on('clickButton', async (b) =>{
 			else if(player.queueRepeat && !player.trackRepeat){
 				player.setQueueRepeat(false);
 				player.setTrackRepeat(true);
-				await musicChannel.send(`:white_check_mark: ทำการเปิดการวนซ้ำเพลงเเบบ \`เพลงเดียว\` เรียบร้อยเเล้ว`).then(async(msg) => await msg.delete({timeout: 5000}));
-				await trackEmbed.edit(track_msg_Embed_loop(client, player, "track"));
+				await musicChannel.send(`:white_check_mark: ทำการเปิดการวนซ้ำเพลงเเบบ \`เพลงเดียว\` เรียบร้อยเเล้ว`).then(async(msg) =>{
+					await trackEmbed.edit(track_msg_Embed_loop(client, player, "track"));
+					await msg.delete({timeout: 5000});
+				});
 			}
 			else if(!player.queueRepeat && player.trackRepeat){
 				player.setQueueRepeat(false);
 				player.setTrackRepeat(false);
-				await musicChannel.send(`:white_check_mark: ทำการปิดวนซ้ำเพลงเรียบร้อยเเล้ว`).then(async(msg) => await msg.delete({timeout: 5000}));
-				await trackEmbed.edit(track_msg_Embed_loop(client, player, "stop"));
+				await musicChannel.send(`:white_check_mark: ทำการปิดวนซ้ำเพลงเรียบร้อยเเล้ว`).then(async(msg) =>{
+					await trackEmbed.edit(track_msg_Embed_loop(client, player, "stop"));
+					await msg.delete({timeout: 5000});
+				});
 			}
 		}
 		else if(b.id == 'shuffle'){
@@ -1170,9 +1186,11 @@ client.on('clickButton', async (b) =>{
 				await musicChannel.send(':warning: เอ๊ะ! ดูเหมือนว่าคิวของคุณจะไม่มีความยาวมากพอน่ะ').then(async(msg) => await msg.delete({timeout: 5000}));
 			}
 			else{
-				player.queue.shuffle();
-				await musicChannel.send(':white_check_mark: ทำการสุ่มเรียงรายการคิวใหม่เรียบร้อยเเล้ว').then(async(msg) => await msg.delete({timeout: 5000}));
-				await queueMessage.edit(queue_msg(client, player));
+				await player.queue.shuffle();
+				await musicChannel.send(':white_check_mark: ทำการสุ่มเรียงรายการคิวใหม่เรียบร้อยเเล้ว').then(async(msg) =>{
+					await queueMessage.edit(queue_msg(client, player));
+					await msg.delete({timeout: 5000});
+				});
 			}
 		}
 		else if(b.id == 'voldown'){
@@ -1232,7 +1250,7 @@ process.on('uncaughtExceptionMonitor', async(err, origin) =>{
 //========================= Login To Bot ========================= 
 client.login(token);
 
-//=========================== tools ============================================
+//=========================== Utils ============================================
 
 function convertTime(duration){
 	var milliseconds = parseInt((duration % 1000) / 100);
@@ -1259,7 +1277,7 @@ function track_msg_Embed(client, player){
 		.setTitle(player.queue.current.title)
 		.setURL(player.queue.current.uri)
 		.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
-		.setFooter(client.user.tag)
+		.setFooter(player.queue.current.requester.username)
 		.setTimestamp()
 	return embed;
 }
@@ -1271,7 +1289,7 @@ function track_msg_Embed_loop(client, player, loop){
 			.setTitle(player.queue.current.title)
 			.setURL(player.queue.current.uri)
 			.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
-			.setFooter(`${client.user.tag}  |  Loop : ทั้งหมด`)
+			.setFooter(`${player.queue.current.requester.username}  |  Loop : ทั้งหมด`)
 	}
 	else if(loop.toLowerCase() === "track"){
 		embed = new MessageEmbed()
@@ -1279,7 +1297,7 @@ function track_msg_Embed_loop(client, player, loop){
 			.setTitle(player.queue.current.title)
 			.setURL(player.queue.current.uri)
 			.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
-			.setFooter(`${client.user.tag}  |  Loop : เพลงเดียว`)
+			.setFooter(`${player.queue.current.requester.username}  |  Loop : เพลงเดียว`)
 	}
 	else if(loop.toLowerCase() === "stop"){
 		embed = new MessageEmbed()
@@ -1287,17 +1305,28 @@ function track_msg_Embed_loop(client, player, loop){
 			.setTitle(player.queue.current.title)
 			.setURL(player.queue.current.uri)
 			.setImage(youtubeThumbnail(player.queue.current.uri, 'high'))
-			.setFooter(`${client.user.tag}`)
+			.setFooter(`${player.queue.current.requester.username}`)
 			.setTimestamp()
 	}
 	return embed;
 }
-function queue_msg(client, player){
-	let Queue_message = `**คิวเพลง:**\n`;
-        for(let i = 0; i < player.queue.length; i++) {
-            Queue_message += `\`${i + 1})\` [${convertTime(player.queue[i].duration)}] - ${player.queue[i].title}\n`;
+function queue_msg(client, player){ // fix bug
+	let Queue_message = `**คิวเพลง: [${player.queue.length}]**\n`;
+	let return_Queue_message;
+	let i;
+        for(i = 0; i < player.queue.length; i++) {
+            Queue_message += `> \`${i + 1})\` [${convertTime(player.queue[i].duration)}] - ${player.queue[i].title}\n`;
+			if(Queue_message.length >= 2000){
+				break;
+			}
+			return_Queue_message = Queue_message;
         }
-	return Queue_message;
+	if(return_Queue_message == undefined || !return_Queue_message){
+		return return_Queue_message = Queue_message + "ยังไม่รายการคิว";
+	}
+	else{
+		return return_Queue_message;
+	}
 }
 function youtubeThumbnail(url, quality){
 	if(url){
@@ -1341,6 +1370,6 @@ async function get_prefix(guild_id){
 		return PREFIX;
     } 
     catch (e) {
-        console.log(e)
+        console.log(e);
     };
 }
