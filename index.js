@@ -10,7 +10,6 @@
 
 
 //=============================== Config ========================================
-const { nodes } = require('./lavalink_server.js');
 
 const prefix = '!';
 const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.3OO1YWNQeTaROODNFJDNuSO0yGQ'; //
