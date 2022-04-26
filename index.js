@@ -12,7 +12,7 @@
 //=============================== Config ========================================
 
 const prefix = '!';
-const token = ''; //
+const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.qJewPySI1SD4uBTz0U-4OGjlYEM'; //
 const config = {
 	ownerID: '708965153131200594',
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
@@ -30,8 +30,8 @@ const config = {
         	},
 		],
 		spotify: {
-			clientID: "",
-			clientSecret: "",
+			clientID: "74354de9255e43abab3fdc86c0064fb7",
+			clientSecret: "eb0f21f5f28840ef91358c26d4c2d9f0",
 		},
 		embed: {
 			default: {
@@ -41,7 +41,7 @@ const config = {
 			},
 		},
 		api: {
-			Genius_Lyrics_Api: '',
+			Genius_Lyrics_Api: '821ZWPq5hpLKbrIQd315c4_OWu2HEnh7yRDjESo-XKjOzUNWY0KIrDgyxy52B1zp',
 		},
 	},
 };
