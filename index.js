@@ -1,11 +1,11 @@
 /**
- * Docs
+ * @Docs
  * 
- * npm install discord.js@~12.5.3 erela.js erela.js-filters discord-buttons quickmongo erela.js-apple erela.js-deezer erela.js-facebook erela.js-spotify chalk@~4.1.2
+ * npm install or yarn install
  *
  * add token and provide prefix
  * if you have own lavalink you can add your own and set secure to **FALSE**
- * to run bot use **yarn start**
+ * to run bot use **yarn start** or **npm run start**
  */
 
 
@@ -14,6 +14,7 @@
 const prefix = '!';
 const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.U3rgNSTwI7rmtai-gQDDdhAtwXk'; //
 const config = {
+	ownerID: '708965153131200594',
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
 	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
 	Music: {
@@ -39,6 +40,9 @@ const config = {
 				banner: 'https://cdn.discordapp.com/attachments/887363452304261140/964713073527099392/standard_4.gif',
 			},
 		},
+		api: {
+			Genius_Lyrics_Api: '821ZWPq5hpLKbrIQd315c4_OWu2HEnh7yRDjESo-XKjOzUNWY0KIrDgyxy52B1zp',
+		},
 	},
 };
 const radioStation = {
@@ -61,10 +65,13 @@ const { Client, MessageEmbed } = require("discord.js");
 const { Manager } = require("erela.js");
 const { Database } = require("quickmongo");
 const chalk = require("chalk");
+const ytdl = require('ytdl-core');
+const lyricsFinder = require('lyrics-finder');
+const Genius = require("genius-lyrics");
 
+const GeniusLyrics = new Genius.Client(config.Music.api.Genius_Lyrics_Api);
 
 //========================= Create Client =========================
-
 const client = new Client();
 //========================= Import Discord-butons ========================= 
 require('discord-buttons')(client);
@@ -232,81 +239,90 @@ client.on("raw", (d) =>{
 	manager.updateVoiceState(d)
 });
 
+//================================================== Message Event ==================================================
+
 client.on("message", async (message) =>{
-	if(message.author.bot) return;
 	if (message.author.bot || message.channel.type === "dm") return;  
 
 	let guild_prefix = await get_prefix(message.guild.id)
     let args = message.content.slice(guild_prefix.length).trim().split(/ +/g);
     let cmd = args.shift().toLowerCase();
-	
-	
+
+	if (message.mentions.has(client.user) && !message.mentions.everyone) {
+		await message.channel.send(new MessageEmbed()
+			.setColor(embed_config.color)
+			.setThumbnail(message.guild.iconURL())
+			.setTitle(`Prefix ของเซิฟเวอร์นี้คือ **\`${guild_prefix}\`**`)
+		);
+	}
 	// if channel is Music channel
 	const musicChannel = await db.get(`music_${message.guild.id}_channel`);
-	if(musicChannel !== null){
-		if(message.channel.id === musicChannel){
-			Music_Channel_Function(client, message, args);
-		}
-	}
-
-	if (!message.content.startsWith(guild_prefix)) return;
-	if(cmd === 'play' || cmd === 'p'){
-		play(client, message, args);
-	}
-	else if(cmd === 'pause'){
-		pause(client, message, args);
-	}
-	else if(cmd === 'resume'){
-		resume(client, message, args);
-	}
-	else if(cmd === 'skip' || cmd === 'sk'){
-		skip(client, message, args);
-	}
-	else if(cmd === 'stop' || cmd === 'dc' || cmd === 'disconnect'){
-		stop(client, message, args);
-	}
-	else if(cmd === 'nowplaying' || cmd === 'np'){
-		nowplaying(client, message, args);
-	}
-	else if(cmd === 'queue' || cmd === 'q'){
-		queue(client, message, args);
-	}
-	else if(cmd === 'loop' || cmd === 'repeat'){
-		loop(client, message, args);
-	}
-	else if(cmd === 'volume' || cmd === 'vol'){
-		volume(client, message, args);
-	}
-	else if(cmd === 'shuffle'){
-		shuffle(client, message, args);
-	}
-	else if(cmd === 'j' || cmd === 'join' || cmd === 'connect'){
-		connect(client, message, args);
-	}
-	else if(cmd === 'radio'){
-		radio(client, message, args);
-	}
-	else if(cmd === 'clearqueue'){
-		clearQueue(client, message, args);
-	}
-	else if(cmd === 'help' || cmd === 'h'){
-		help(client, message, args);
-	}
-	else if(cmd === 'filter'){
-		filter(client, message, args);
-	}
-	else if(cmd === 'setup'){
-		setup(client, message, args);
-	}
-	else if(cmd === 'prefix'){
-		Prefix(client, message, args);
-	}
-	else if(cmd === 'seek' || cmd === 'seekto'){
-		seek(client, message, args);
+	if(musicChannel !== null && message.channel.id === musicChannel){
+		Music_Channel_Function(client, message, args);
 	}
 	else {
-		if(message.content.startsWith(prefix)){
-			return message.channel.send('⚠ | ฮืมม.. รู้สึกว่าคำสั่งนี้ไม่สามารถใช้ได้หรือไม่มีคำสั่งนี้น่ะ');
+		if (!message.content.startsWith(guild_prefix)) return;
+		if(cmd === 'play' || cmd === 'p'){
+			play(client, message, args);
+		}
+		else if(cmd === 'pause'){
+			pause(client, message, args);
+		}
+		else if(cmd === 'resume'){
+			resume(client, message, args);
+		}
+		else if(cmd === 'skip' || cmd === 'sk'){
+			skip(client, message, args);
+		}
+		else if(cmd === 'stop' || cmd === 'dc' || cmd === 'disconnect'){
+			stop(client, message, args);
+		}
+		else if(cmd === 'nowplaying' || cmd === 'np'){
+			nowplaying(client, message, args);
+		}
+		else if(cmd === 'queue' || cmd === 'q'){
+			queue(client, message, args);
+		}
+		else if(cmd === 'loop' || cmd === 'repeat'){
+			loop(client, message, args);
+		}
+		else if(cmd === 'volume' || cmd === 'vol'){
+			volume(client, message, args);
+		}
+		else if(cmd === 'shuffle'){
+			shuffle(client, message, args);
+		}
+		else if(cmd === 'j' || cmd === 'join' || cmd === 'connect'){
+			connect(client, message, args);
+		}
+		else if(cmd === 'radio'){
+			radio(client, message, args);
+		}
+		else if(cmd === 'clearqueue'){
+			clearQueue(client, message, args);
+		}
+		else if(cmd === 'help' || cmd === 'h'){
+			help(client, message, args);
+		}
+		else if(cmd === 'filter'){
+			filter(client, message, args);
+		}
+		else if(cmd === 'setup'){
+			setup(client, message, args);
+		}
+		else if(cmd === 'prefix'){
+			Prefix(client, message, args);
+		}
+		else if(cmd === 'seek' || cmd === 'seekto'){
+			seek(client, message, args);
+		}
+		else if(cmd === 'lyrics' || cmd === 'ly'){
+			lyrics_cmd(client, message, args);
+		}
+		else {
+			if(message.content.startsWith(prefix)){
+				return message.channel.send('⚠ | ฮืมม.. รู้สึกว่าคำสั่งนี้ไม่สามารถใช้ได้หรือไม่มีคำสั่งนี้น่ะ');
+			}
 		}
 	}
 });
@@ -314,6 +330,62 @@ client.on("message", async (message) =>{
 //================================================== Commands ==================================================
 
 const help = async(client, message, args) =>{
+	const OWNER = client.users.cache.get(config.ownerID);
+	let credit_embed = new MessageEmbed()
+		.setColor(embed_config.color)
+		.setThumbnail()
+		.setTitle('💳 เครดิต')
+		.addFields(
+			[
+				{
+					name: '💨 | Coded By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}\``,
+					inline: true,
+				},
+				{
+					name: '🎨 | Design By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}\``,
+					inline: true,
+				},
+				{
+					name: '🛠 | Fix Bug By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}\``,
+					inline: true,
+				},
+				{
+					name: '🩺 | Test By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}\``,
+					inline: true,
+				},
+				{
+					name: '✨ | Use By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}\``,
+					inline: true,
+				},
+				{
+					name: '💵 | Sponsored By',
+					value: `\`No ;-;\``,
+					inline: true,
+				},
+				{
+					name: '📢 | Publish By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}\``,
+					inline: true,
+				},
+				{
+					name: '💣 | Destroy By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}\``,
+					inline: true,
+				},
+				{
+					name: '💸 | Pay Electricity Bill By',
+					value: `\`${OWNER.username}#${OWNER.discriminator}'s Mom\``,
+					inline: true,
+				},
+			]
+		)
+		.setFooter(`${client.user.tag}`, client.user.displayAvatarURL())
+		.setTimestamp()
 	let home_embed = new MessageEmbed()
 		.setColor(embed_config.color)
 		.setAuthor('📗 หน้าต่างช่วยเหลือ', message.guild.iconURL())
@@ -323,7 +395,7 @@ const help = async(client, message, args) =>{
 					name: '🟠 | Source Code',
 					value: `[โค้ดบอท](${config.github})`,
 					inline: true,
-				}
+				},
 			]
 		)
 		.setImage(embed_config.helpBanner)
@@ -472,29 +544,39 @@ bassboost , nightcore , vaporwave , pop , soft , treblebass , eightdimension , k
 		.setID(`close`)
 		.setStyle(`red`)
 		.setEmoji(`❌`)
+	let bcredit = new MessageButton()
+		.setLabel(`เครดิต`)
+		.setID(`credit`)
+		.setStyle(`PRIMARY`)
+		.setEmoji(`💳`)
 	let row = new MessageActionRow()
 		.addComponents(bhome, bmusic, bfilter, bsetting, bclose);
+	let row2 = new MessageActionRow()
+		.addComponents(bcredit)
 
 	const filter = ( button ) => button.clicker.id === message.author.id;
-	const MESSAGE = await message.channel.send(home_embed,row);
+	const MESSAGE = await message.channel.send(home_embed, { components: [row, row2] });
 	const collector = MESSAGE.createButtonCollector(filter, { time : 60000 });
 	collector.on('collect', async (b) => {
 		if(b.id == 'home'){
-			MESSAGE.edit(home_embed, row);
+			MESSAGE.edit(home_embed, { components: [row, row2] });
 		}
 		else if(b.id == 'music'){
-			MESSAGE.edit(help_embed, row);
+			MESSAGE.edit(help_embed, { components: [row, row2] });
 		}
 		else if(b.id == 'filter'){
-			MESSAGE.edit(filter_help, row);
+			MESSAGE.edit(filter_help, { components: [row, row2] });
 		}
 		else if(b.id == 'setting'){
-			MESSAGE.edit(setting_embed, row);
+			MESSAGE.edit(setting_embed, { components: [row, row2] });
+		}
+		else if(b.id == 'credit'){
+			MESSAGE.edit(credit_embed, { components: [row, row2] });
 		}
 		else if(b.id == 'close'){
-			MESSAGE.delete();
+			await MESSAGE.delete({ timeout: 1000 });
 		}
-		await b.reply.defer()
+		//await b.reply.defer()
 	});
 	collector.on('end', async(b) => {
 		if(MESSAGE){
@@ -642,8 +724,67 @@ const nowplaying = async(client, message, args) =>{
 	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
 	else if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
 	else{
-		let tracks = player.queue.current;
-		message.channel.send(`**กำลังเล่น** \n\n\`${tracks.title}\``);
+        let Repeat = '❌';
+		if(player.queueRepeat || player.trackRepeat){
+			Repeat = '✅';
+		}
+		let Np_embed = new MessageEmbed()
+			.setColor(embed_config.color)
+			.setThumbnail(player.queue.current.thumbnail)
+			.addFields([
+				{
+					name: `🎶 | กำลังเล่นเพลง`,
+					value: `> [${player.queue.current.title}](${player.queue.current.uri})`,
+					inline: false,
+				},
+				{
+					name: `🎧 | ช่องฟังเพลง`,
+					value: `> <#${player.voiceChannel}>`,
+					inline: true,
+				},
+				{
+					name: `📢 | ขอเพลงโดย`,
+					value: `> <@${player.queue.current.requester.id}>`,
+					inline: true,
+				},
+				{
+					name: `⏱️ | ความยาว`,
+					value: `> \`${convertTime(player.queue.current.duration)}\``,
+					inline: true,
+				},
+				{
+					name: `🎙 | ศิลปิน`,
+					value: `> \`${player.queue.current.author}\``,
+					inline: true,
+				},
+				{
+					name: `🌀 | คิว`,
+					value: `> \`${player.queue.length}\``,
+					inline: true,
+				},
+				{
+					name: `🔁 | เปิดใช้วนซ้ำ`,
+					value: `> ${Repeat}`,
+					inline: true,
+				},
+				{
+					name: `🔊 | ระดับเสียง`,
+					value: `> \`${player.volume} %\``,
+					inline: true,
+				},
+			])
+		.setFooter(client.user.tag)
+		.setTimestamp()
+
+		
+		if(player.queue.current.uri.includes("youtube.com")){
+			const info = await ytdl.getInfo(player.queue.current.identifier);
+        	const format = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+			Np_embed.addField(`📥 | ดาวน์โหลดเพลง`, `> [\`คลิ๊กลิ้งนี้เพื่อโหลดเพลง\`](${format.url})`, true);
+		}
+		Np_embed.addField(`᲼`, `\`${convertTime(player.position)}\` ${progressbar(player.position, player.queue.current.duration, 18).Bar} \`${convertTime(player.queue.current.duration)}\``, false);
+		
+		await message.channel.send(Np_embed);
 	}
 }
 const queue = async(client, message, args) =>{
@@ -906,8 +1047,9 @@ const setup = async(client, message, args) =>{
 				.addComponents(bvolumedown,bvolumeup,bmute)
 			await channel.send(config.Music.embed.default.banner);
 			await channel.send('**คิวเพลง:**\nเข้าช่องเสียง และพิมพ์ชื่อเพลงหรือลิงก์ของเพลง เพื่อเปิดเพลงน่ะ').then(async(msg) => await db.set(`music_${message.guild.id}_queue_message`, msg.id));
-            await channel.send(trackEmbed,{components: [row, row2]}).then(async(msg) => await db.set(`music_${message.guild.id}_track_message`, msg.id));
-            await message.channel.send(':white_check_mark: ทำการตั้งค่าระบบเพลงเรียบร้อยเเล้ว');
+            await channel.send(trackEmbed, {components: [row, row2]}).then(async(msg) => await db.set(`music_${message.guild.id}_track_message`, msg.id));
+            //await channel.setTopic(``);
+			await message.channel.send(':white_check_mark: ทำการตั้งค่าระบบเพลงเรียบร้อยเเล้ว');
 		});
 	}
 	catch(err){
@@ -981,6 +1123,22 @@ const seek = async(client, message, args) =>{
 	} 
 	catch(e){
 		msg.channel.send(`⚠ | เกิดข้อผิดพลาดขึ้นโปรดลองอีกครั้งในภายหลัง`);
+	}
+}
+const lyrics_cmd = async(client, message, args) =>{
+	let channel = message.member.voice.channel;
+	let player = manager.players.get(message.guild.id);
+	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
+	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
+	else if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
+	else {
+		let Lyrics_embed = new MessageEmbed()
+			.setColor(embed_config.color)
+			.setAuthor(player.queue.current.title)
+			.setDescription(`\`\`\`${await get_Lyrics(client, player)}\`\`\``)
+			.setFooter(client.user.tag)
+			.setTimestamp()
+		await message.channel.send(Lyrics_embed);
 	}
 }
 
@@ -1355,6 +1513,26 @@ function youtubeThumbnail(url, quality){
 			return thumbnail;
 		}
 	}
+}
+function progressbar(value, maxValue, size){
+	const percentage = value / maxValue; 
+  	const progress = Math.round(size * percentage); 
+  	const emptyProgress = size - progress; 
+
+  	const progressText = "▇".repeat(progress); 
+  	const emptyProgressText = "—".repeat(emptyProgress);
+  	const percentageText = Math.round(percentage * 100) + "%";
+
+  	const Bar = progressText + emptyProgressText;
+  	return { Bar, percentageText };
+}
+async function get_Lyrics(client, player){
+	let Lyrics = await lyricsFinder(" ", player.queue.current.title) || "No_Result";
+	if(Lyrics == "No_Result"){
+		let searches = await GeniusLyrics.songs.search(player.queue.current.title);
+		Lyrics = await searches[0].lyrics();
+	}
+	return await Lyrics;
 }
 async function get_prefix(guild_id){
 	let PREFIX;

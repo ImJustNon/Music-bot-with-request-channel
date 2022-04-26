@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "shard": "node shard.js"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",
@@ -21,6 +20,9 @@
     "erela.js-facebook": "^1.0.4",
     "erela.js-filters": "^1.2.7",
     "erela.js-spotify": "^1.2.0",
-    "quickmongo": "^5.1.2"
+    "genius-lyrics": "^4.3.6",
+    "lyrics-finder": "^21.7.0",
+    "quickmongo": "^5.1.2",
+    "ytdl-core": "^4.11.0"
   }
 }
