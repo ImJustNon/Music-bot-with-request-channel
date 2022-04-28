@@ -534,6 +534,16 @@ bassboost , nightcore , vaporwave , pop , soft , treblebass , eightdimension , k
 					value: `ตั้งค่า Prefix เซิฟเวอร์`, 
 					inline: true,
 				},
+				{
+					name: `🤖 | \` ${await get_prefix(message.guild.id)}stats \``,
+					value: `สถานะบอท`, 
+					inline: true,
+				},
+				{
+					name: `🤖 | \` ${await get_prefix(message.guild.id)}ping \``,
+					value: `ค่าการตอบสนองบอท`, 
+					inline: true,
+				},
 			]
 		)
 		.setFooter(`${client.user.tag}`, client.user.displayAvatarURL())
@@ -1302,8 +1312,9 @@ const ping = async(client, message, args) =>{
 			.addField("API Ping", `\`\`\`ini\n[ ${api_ping}ms ]\`\`\``, true)
 			.setFooter(client.user.tag)
 			.setTimestamp();
-	  
-		await msg.edit(PingEmbed);
+		setTimeout(() =>{
+			await msg.edit(PingEmbed);
+		}, 1500);
 	});
 }
 //========================= voice channel Event =========================
