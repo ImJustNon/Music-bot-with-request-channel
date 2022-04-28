@@ -1312,7 +1312,7 @@ const ping = async(client, message, args) =>{
 			.addField("API Ping", `\`\`\`ini\n[ ${api_ping}ms ]\`\`\``, true)
 			.setFooter(client.user.tag)
 			.setTimestamp();
-		setTimeout(() =>{
+		setTimeout(async() =>{
 			await msg.edit(PingEmbed);
 		}, 1500);
 	});
