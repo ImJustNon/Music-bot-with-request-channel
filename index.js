@@ -21,10 +21,10 @@ const config = {
 		nodes: [
 			{
 				identifier: "main",
-				host: "lavalink.islantay.tk",
-				port: 8880,
-				password: "waifufufufu",
-				secure: false,
+				host: "lavalinklnwza.herokuapp.com",
+				port: 443,
+				password: "reirin",
+				secure: true,
 				retryAmount: Infinity,
 				retryDelay: 3000,
         	},
@@ -61,13 +61,17 @@ const emoji = {
 };
 
 //========================= import =================
-const { Client, MessageEmbed } = require("discord.js");
+const { Client, MessageEmbed, version } = require("discord.js");
 const { Manager } = require("erela.js");
 const { Database } = require("quickmongo");
 const chalk = require("chalk");
 const ytdl = require('ytdl-core');
 const lyricsFinder = require('lyrics-finder');
 const Genius = require("genius-lyrics");
+const moment = require("moment");
+require("moment-duration-format");
+const os = require("os");
+const si = require("systeminformation");
 
 const GeniusLyrics = new Genius.Client(config.Music.api.Genius_Lyrics_Api);
 
@@ -84,7 +88,9 @@ const db = new Database(config.mongoURL);
 db.on("ready", () => {
     console.log(chalk.bold.magenta("[Data-Base] ") + chalk.bold.white("Mongodb has Connected!"));
 });
-db.connect();
+(async() =>{
+	await db.connect();
+})();
 //========================= Erelajs Plugin =========================
 const Filter = require("erela.js-filters");
 const Spotify = require("erela.js-spotify");
@@ -216,7 +222,7 @@ client.on("ready", () =>{
 client.on("ready", () =>{
 	// set activity
 	let i = 0;
-	let activity = ['Music', 'เพลง', '歌', '歌曲', 'песня', 'गाना', '노래'];
+	let activity = ['Music', 'เพลง', '歌', '歌曲', 'песня', 'गाना', '노래', 'låt', 'canticum', 'പാട്ട്', 'песма', 'aýdym', 'گيت', 'song', 'mele', 'ሙዚቃ', 'ເພງ'];
 	setInterval(async() =>{
 		if(i === activity.length) i = 0;
 		try{
@@ -298,7 +304,7 @@ client.on("message", async (message) =>{
 		else if(cmd === 'radio'){
 			radio(client, message, args);
 		}
-		else if(cmd === 'clearqueue'){
+		else if(cmd === 'clearqueue' || cmd === 'clear' || cmd === 'clearq'){
 			clearQueue(client, message, args);
 		}
 		else if(cmd === 'help' || cmd === 'h'){
@@ -318,6 +324,15 @@ client.on("message", async (message) =>{
 		}
 		else if(cmd === 'lyrics' || cmd === 'ly'){
 			lyrics_cmd(client, message, args);
+		}
+		else if(cmd === 'search' || cmd === 's'){
+			search(client, message, args);
+		}
+		else if(cmd === 'stats' || cmd === 'status'){
+			status(client, message, args);
+		}
+		else if(cmd === 'ping'){
+			ping(client, message, args);
 		}
 		else {
 			if(message.content.startsWith(prefix)){
@@ -472,6 +487,11 @@ const help = async(client, message, args) =>{
 				{
 					name: `:notes: | \` ${await get_prefix(message.guild.id)}seek \``,
 					value: `ข้ามเวลาเพลง`, 
+					inline: true,
+				},
+				{
+					name: `:notes: | \` ${await get_prefix(message.guild.id)}search \``,
+					value: `ค้นหาเเละเลือกเพลง`, 
 					inline: true,
 				},	
 			]
@@ -795,11 +815,20 @@ const queue = async(client, message, args) =>{
 	else if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
 	else if(!player.queue.size || player.queue.size === 0 || !player.queue || player.queue.length === 0) return message.channel.send('⚠ | คุณยังไม่มีคิวการเล่นน่ะ');
 	else{
-		let queueMsg = '**คิวเพลง**\n';
+		let queueMsg = "";
+		let qlnwza;
 		for(let i = 0; i < player.queue.length; i++){
-			queueMsg += `\`${i + 1})\` [${convertTime(player.queue[i].duration)}] - ${player.queue[i].title}`
+			queueMsg += `\`${i + 1})\` [${convertTime(player.queue[i].duration)}] - ${player.queue[i].title}\n╰  **เพิ่มโดย** : \`${player.queue[i].requester.username}\`\n`;
+			if(queueMsg.length > 4096) break;
+			qlnwza = queueMsg;
 		}
-		message.channel.send(queueMsg); 
+		const qEmbed = new MessageEmbed()
+			.setColor(embed_config.color)
+			.setTitle(`รายการคิวเพลงทั้งหมด`)
+			.setDescription(queueMsg)
+			.setFooter(client.user.tag)
+			.setTimestamp()
+		message.channel.send(qEmbed); 
 	}
 }
 const loop = async(client, message, args) =>{
@@ -808,19 +837,42 @@ const loop = async(client, message, args) =>{
 	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
 	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
 	else if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
+	else if(!args[0]) return message.channel.send(`⚠ | โปรดระบุรูปเเบบการวนซ้ำด้วยน่ะ เช่น \`queue, track, none\``);
 	else{
-		if(!player.trackRepeat && !player.queueRepeat){
+		if(args[0].toLowerCase() === "queue" || args[0].toLowerCase() === "all" || args[0].toLowerCase() === "q"){
+			if(player.queueRepeat){
+				return message.channel.send(`⚠ | ทำการเปิดการวนซ้ำเเบบ \`ทั้งหมด\` อยู่นะ`);
+			}
+			if(player.trackRepeat){
+				player.setTrackRepeat(false);
+			}
 			player.setQueueRepeat(true);
 			message.channel.send(`:white_check_mark: ทำการเปิดการวนซ้ำเเบบ \`ทั้งหมด\` เรียบร้อยเเล้ว`);
 		}
-		else if(player.queueRepeat && !player.trackRepeat){
+		else if(args[0].toLowerCase() === "track" || args[0].toLowerCase() === "single" || args[0].toLowerCase() === "song" || args[0].toLowerCase() === "this"){
+			if(player.trackRepeat){
+				return message.channel.send('⚠ | ทำการเปิดการวนซ้ำเเบบ \`เพลงเดียว\` อยู่นะ');
+			}
+			if(player.queueRepeat){
+				player.setQueueRepeat(false);
+			}
 			player.setTrackRepeat(true); 
-			player.setQueueRepeat(false);
 			message.channel.send(`:white_check_mark: ทำการเปิดการวนซ้ำเเบบ \`เพลงเดียว\` เรียบร้อยเเล้ว`);
 		}
-		else if(!player.queueRepeat && player.trackRepeat){
-			player.setTrackRepeat(false);
-			message.channel.send(`:white_check_mark: ทำการปิดการวนซ้ำเรียบร้อยเเล้ว`);
+		else if(args[0].toLowerCase() === "none" || args[0].toLowerCase() === "no" || args[0].toLowerCase() === "off" || args[0].toLowerCase() === "stop"){
+			if(!player.queueRepeat && !player.trackRepeat){
+				return message.channel.send('⚠ | ยังไม่มีการเปิดใช้งานการวนซ้ำเลยน่ะ');
+			}
+			let loopType;
+			if(player.queueRepeat){
+				player.setQueueRepeat(false);
+				loopType = 'ทั้งหมด';
+			}
+			if(player.trackRepeat){
+				player.setTrackRepeat(false);
+				loopType = 'เพลงเดียว';
+			}
+			message.channel.send(`:white_check_mark: ทำการ**ปิด**การวนซ้ำ \`${loopType}\` เรียบร้อยเเล้ว`);
 		}
 	}
 }
@@ -888,6 +940,7 @@ const radio = async(client, message, args) =>{
 			});
 		}
 		if(player.state !== 'CONNECTED') player.connect();
+		if(player.queue.length > 0) player.queue.clear();
 		playRadio(radioStation.ecq_18k);
 	}
 	async function playRadio(url){
@@ -1141,7 +1194,118 @@ const lyrics_cmd = async(client, message, args) =>{
 		await message.channel.send(Lyrics_embed);
 	}
 }
-
+const search = async(client, message, args) =>{
+	let channel = message.member.voice.channel;
+	let player = manager.players.get(message.guild.id);
+	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
+	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
+	else if(!args[0]) return message.channel.send('⚠ | โปรดระบุสื่งที่ต้องการจะค้นหาด้วยน่ะ');
+	const queary = args.join(' ');
+	const results = await manager.search(queary, message.author);
+	const tracks = results.tracks.slice(0, 10);
+	let resultsDescription = "";
+	let counter = 1;
+	for(const track of tracks){
+		resultsDescription += `\`${counter}\` [${track.title}](${track.uri})\n`;
+		counter++;
+	}
+	const embed = new MessageEmbed()
+		.setAuthor(`รายการการค้นหาของ ${queary}`)
+		.setDescription(resultsDescription)
+		.setColor(embed_config.color)
+		.setFooter(client.user.tag)
+		.setTimestamp()
+	await message.channel.send("โปรดเลือกตังเลือกที่ต้องการจากรายการด้านล่างได้เลยน่ะ",embed);
+	const response = await message.channel.awaitMessages(async msg => msg.author.id === message.author.id, {
+		max: 1,
+		time: 30000,
+	});
+	const answer = await response.first().content;
+	const track = tracks[answer - 1];
+	if(player){
+		player.queue.add(track);
+		message.channel.send(new MessageEmbed()
+			.setColor(embed_config.color)
+			.setDescription(`✅ | เพิ่มเพลง \`${track.title}\` เรียบร้อยเเล้ว`)
+		);
+	}
+	else {
+		player = manager.create({
+			guild: message.guild.id,
+			voiceChannel: message.member.voice.channel.id,
+			textChannel: message.channel.id,
+			selfDeafen: false,
+			selfMute: false,
+			volume: 80,
+		});
+		if(player.state !== 'CONNECTED') player.connect();
+		player.queue.add(track);
+		player.play();
+		message.channel.send(
+			new MessageEmbed()
+				.setColor(embed_config.color)
+				.setDescription(`✅ เพิ่มเพลง \`${track.title}\` เรียบร้อยเเล้ว`)
+		);
+	}
+}
+const status = async(client, message, args) =>{
+	const duration1 = moment
+      	.duration(message.client.uptime)
+    	.format(" D [days], H [hrs], m [mins], s [secs]");
+    const cpu = await si.cpu();
+    let ccount = client.channels.cache.size;
+    let scount = client.guilds.cache.size;
+    let mcount = 0;
+    client.guilds.cache.forEach((guild) => {
+      mcount += guild.memberCount;
+    });
+    const statsEmbed = new MessageEmbed()
+      .setColor(embed_config.color)
+      .setThumbnail(message.client.user.displayAvatarURL())
+      .setDescription(`🖥 **Status**
+**= STATISTICS =**
+**• Servers** : ${scount}
+**• Channels** : ${ccount}
+**• Users** : ${mcount}
+**• Discord.js** : v.${version}
+**• Node** : ${process.version}
+**= SYSTEM =**
+**• Platfrom** : ${os.type}
+**• Uptime** : ${duration1}
+**• CPU** : 
+> **• Cores** : ${cpu.cores}
+> **• Model** : ${os.cpus()[0].model} 
+> **• Speed** : ${os.cpus()[0].speed} MHz
+**• MEMORY** :
+> **• Total Memory** : ${(os.totalmem() / 1024 / 1024).toFixed(2)} Mbps
+> **• Free Memory** : ${(os.freemem() / 1024 / 1024).toFixed(2)} Mbps
+> **• Heap Total** : ${(process.memoryUsage().heapTotal / 1024 / 1024).toFixed(
+      2
+    )} Mbps
+> **• Heap Usage** : ${(process.memoryUsage().heapUsed / 1024 / 1024).toFixed(
+      2
+    )} Mbps
+`)
+	.setFooter(client.user.tag)
+	.setTimestamp();
+    message.channel.send(statsEmbed);
+}
+const ping = async(client, message, args) =>{
+	await message.channel.send('⏳ | โปรดรอซักครู่ กำลังทดสอบ...').then(async msg =>{
+		const ping = msg.createdAt - message.createdAt;
+		const api_ping = client.ws.ping;
+	  
+		const PingEmbed = new MessageEmbed()
+			.setAuthor("🏓 | ผลการทดสอบ | 🏓")
+			.setColor(embed_config.color)
+			.addField("BOT Ping", `\`\`\`ini\n[ ${ping}ms ]\`\`\``, true)
+			.addField("API Ping", `\`\`\`ini\n[ ${api_ping}ms ]\`\`\``, true)
+			.setFooter(client.user.tag)
+			.setTimestamp();
+	  
+		await msg.edit(PingEmbed);
+	});
+}
 //========================= voice channel Event =========================
 client.on('voiceStateUpdate', async(oldState, newState) =>{
 	let player = await manager.players.get(newState.guild.id);

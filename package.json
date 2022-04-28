@@ -8,7 +8,7 @@
     "start": "node index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "I'm Simp#2638",
   "license": "ISC",
   "dependencies": {
     "chalk": "~4.1.2",
@@ -22,7 +22,11 @@
     "erela.js-spotify": "^1.2.0",
     "genius-lyrics": "^4.3.6",
     "lyrics-finder": "^21.7.0",
+    "moment": "^2.29.3",
+    "moment-duration-format": "^2.3.2",
+    "os": "^0.1.2",
     "quickmongo": "^5.1.2",
+    "systeminformation": "^5.11.14",
     "ytdl-core": "^4.11.0"
   }
 }
