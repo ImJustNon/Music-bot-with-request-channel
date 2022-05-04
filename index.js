@@ -8,30 +8,32 @@
  * to run bot use **yarn start** or **npm run start**
  */
 
+//=============================== Import dotenv ========================================
+const env = require('dotenv').config()
 
 //=============================== Config ========================================
-
-const prefix = '!';
-const token = 'OTY0NDU4NjgxNTQ4ODIwNDkw.Ylk8JA.qJewPySI1SD4uBTz0U-4OGjlYEM'; //
+const prefix = env.parsed.prefix || '';
+const token = env.parsed.token || ''; 
 const config = {
-	ownerID: '708965153131200594',
+	ownerID: env.parsed.ownerID || '',
 	github: 'https://github.com/ImJustNon/Music-bot-with-request-channel',
-	mongoURL: 'mongodb://newuser:newuser@cluster0-shard-00-00.uf6th.mongodb.net:27017,cluster0-shard-00-01.uf6th.mongodb.net:27017,cluster0-shard-00-02.uf6th.mongodb.net:27017/myFirstDatabase?ssl=true&replicaSet=atlas-6cm745-shard-0&authSource=admin&retryWrites=true&w=majority',
+	mongoURL: env.parsed.mongoURL || '',
+	port: env.parsed.app_port || '',
 	Music: {
 		nodes: [
 			{
 				identifier: "main",
-				host: "lavalinklnwza.herokuapp.com",
-				port: 443,
-				password: "reirin",
-				secure: true,
+				host: env.parsed.host || "",
+				port: parseInt(env.parsed.port) || 80,
+				password: env.parsed.pass || "",
+				secure: parseBoolean(env.parsed.secure) || false,
 				retryAmount: Infinity,
 				retryDelay: 3000,
         	},
 		],
 		spotify: {
-			clientID: "74354de9255e43abab3fdc86c0064fb7",
-			clientSecret: "eb0f21f5f28840ef91358c26d4c2d9f0",
+			clientID: env.parsed.spotifyID || "",
+			clientSecret: env.parsed.spotifySecret || "",
 		},
 		embed: {
 			default: {
@@ -45,9 +47,16 @@ const config = {
 		},
 	},
 };
-const radioStation = {
-	ecq_18k: 'http://112.121.151.133:8147/live',
-};
+const radioStation = [
+	{
+		name: '[👑] 18K-RADIO',
+		page: 'https://ecq-studio.com/18K/X/',
+		url: 'http://112.121.151.133:8147/live',
+		config: {
+			color: 'YELLOW',
+		},
+	},
+];
 const embed_config = {
 	color: '#fa5c00', //RANDOM
 	helpBanner: 'https://cdn.discordapp.com/attachments/887363452304261140/964767665157730344/standard_8.gif',
@@ -72,9 +81,10 @@ const moment = require("moment");
 require("moment-duration-format");
 const os = require("os");
 const si = require("systeminformation");
+const express = require('express');
 
 const GeniusLyrics = new Genius.Client(config.Music.api.Genius_Lyrics_Api);
-
+const app = express();
 //========================= Create Client =========================
 const client = new Client();
 //========================= Import Discord-butons ========================= 
@@ -240,7 +250,12 @@ client.on("ready", () =>{
 		i++
 	}, 5 * 1000);
 });
-
+client.on('guildDelete', async(guild) =>{
+	if(await db.get(`music_${guild.id}_channel`)) await db.delete(`music_${guild.id}_channel`);
+	if(await db.get(`music_${guild.id}_queue_message`)) await db.delete(`music_${guild.id}_queue_message`);
+	if(await db.get(`music_${guild.id}_track_message`)) await db.delete(`music_${guild.id}_track_message`);
+	if(await db.get(`prefix_${guild.id}`)) await db.delete(`prefix_${guild.id}`);
+});
 client.on("raw", (d) =>{
 	manager.updateVoiceState(d)
 });
@@ -254,7 +269,7 @@ client.on("message", async (message) =>{
     let args = message.content.slice(guild_prefix.length).trim().split(/ +/g);
     let cmd = args.shift().toLowerCase();
 
-	if (message.mentions.has(client.user) && !message.mentions.everyone) {
+	if(message.mentions.has(client.user) && !message.mentions.everyone){
 		await message.channel.send(new MessageEmbed()
 			.setColor(embed_config.color)
 			.setThumbnail(message.guild.iconURL())
@@ -269,70 +284,76 @@ client.on("message", async (message) =>{
 	else {
 		if (!message.content.startsWith(guild_prefix)) return;
 		if(cmd === 'play' || cmd === 'p'){
-			play(client, message, args);
+			play(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'pause'){
-			pause(client, message, args);
+			pause(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'resume'){
-			resume(client, message, args);
+			resume(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'skip' || cmd === 'sk'){
-			skip(client, message, args);
+			skip(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'stop' || cmd === 'dc' || cmd === 'disconnect'){
-			stop(client, message, args);
+			stop(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'nowplaying' || cmd === 'np'){
-			nowplaying(client, message, args);
+			nowplaying(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'queue' || cmd === 'q'){
-			queue(client, message, args);
+			queue(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'loop' || cmd === 'repeat'){
-			loop(client, message, args);
+			loop(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'volume' || cmd === 'vol'){
-			volume(client, message, args);
+			volume(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'shuffle'){
-			shuffle(client, message, args);
+			shuffle(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'j' || cmd === 'join' || cmd === 'connect'){
-			connect(client, message, args);
+			connect(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'radio'){
-			radio(client, message, args);
+			radio(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'clearqueue' || cmd === 'clear' || cmd === 'clearq'){
-			clearQueue(client, message, args);
+			clearQueue(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'help' || cmd === 'h'){
-			help(client, message, args);
+			help(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'filter'){
-			filter(client, message, args);
+			filter(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'setup'){
-			setup(client, message, args);
+			setup(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'prefix'){
-			Prefix(client, message, args);
+			Prefix(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'seek' || cmd === 'seekto'){
-			seek(client, message, args);
+			seek(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'lyrics' || cmd === 'ly'){
-			lyrics_cmd(client, message, args);
+			lyrics_cmd(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'search' || cmd === 's'){
-			search(client, message, args);
+			search(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'stats' || cmd === 'status'){
-			status(client, message, args);
+			status(client, message, args, guild_prefix);
 		}
 		else if(cmd === 'ping'){
-			ping(client, message, args);
+			ping(client, message, args, guild_prefix);
+		}
+		else if(cmd === 'remove' || cmd === 'rm'){
+			remove(client, message, args, guild_prefix);
+		}
+		else if(cmd === 'skipto'){
+			skipto(client, message, args, guild_prefix);
 		}
 		else {
 			if(message.content.startsWith(prefix)){
@@ -493,7 +514,17 @@ const help = async(client, message, args) =>{
 					name: `:notes: | \` ${await get_prefix(message.guild.id)}search \``,
 					value: `ค้นหาเเละเลือกเพลง`, 
 					inline: true,
-				},	
+				},
+				{
+					name: `:notes: | \` ${await get_prefix(message.guild.id)}remove \``,
+					value: `นำเพลงในคิวออก`, 
+					inline: true,
+				},
+				{
+					name: `:notes: | \` ${await get_prefix(message.guild.id)}skipto \``,
+					value: `ข้ามเพลงไปยังเพลงที่ต้องการเลือก`, 
+					inline: true,
+				},
 			]
 		)
 		.setFooter(`${client.user.tag}`, client.user.displayAvatarURL())
@@ -938,6 +969,7 @@ const radio = async(client, message, args) =>{
 	let player = manager.players.get(message.guild.id);
 	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
 	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
+	else if(player.playing) return message.channel.send('⚠ | โปรดปิดเพลงทำกำลังเปิด ก่อนใช้คำสั่งนี้น่ะ');
 	else{
 		if(!player){
 			player = manager.create({
@@ -950,31 +982,54 @@ const radio = async(client, message, args) =>{
 			});
 		}
 		if(player.state !== 'CONNECTED') player.connect();
-		if(player.queue.length > 0) player.queue.clear();
-		playRadio(radioStation.ecq_18k);
+		let embed = new MessageEmbed()
+			.setColor(embed_config.color)
+			.setTitle(`คุณสามารถเลือกเปิดเพลงจากสถานีวิทยุได้จากตัวเลือกด้านล่างได้เลยน่ะ`)
+			.setFooter(client.user.tag)
+			.setTimestamp()
+		let b18k = new MessageMenuOption()
+            .setLabel('หน้าหลัก')
+            .setEmoji('👑')
+            .setValue('18k')
+            .setDescription('[เปิดเพลงจากสถานี 18K-RADIO]')
+		let select = new MessageMenu()
+            .setID('selector')
+            .setPlaceholder('กดเพื่อดูสถานีวิทยุทั้งหมด')
+            .setMaxValues(1)
+            .setMinValues(1)
+            .addOptions(b18k)
+		const Sendmenu = await message.channel.send(embed, select);
+        const filter = ( button ) => button.clicker.id === message.author.id;
+		const collector = Sendmenu.createMenuCollector(filter, { time : 30000 });
+		collector.on("collect", async(b, menu) =>{   
+			if(b.values[0] === "18k"){
+				playRadio(radioStation[0]);
+			}
+			if(b.values[0] === "random"){
+				playRadio(radioStation[Math.floor(Math.random() * radioStation.length)]);
+			}
+			await b.reply.defer();
+		});
 	}
-	async function playRadio(url){
-		let res = await manager.search(url, message.author);
+	async function playRadio(radio){
+		let res = await manager.search(radio.url, message.author);
 		switch(res.loadType){
-			case "LOAD_FAILED":
-			{
+			case "LOAD_FAILED": {
 				if(!player.queue.current) player.destroy();
 				await message.channel.send('⚠ | เกิดข้อผิดพลาด โปรดลองอีกครั้งในภายหลังน่ะ');
 			}
 			break;
-			case "SEARCH_RESULT":
-			{
+			case "SEARCH_RESULT": {
 				await player.queue.add(res.tracks[0]);
-				message.channel.send(new MessageEmbed().setColor('YELLOW').setDescription(`:white_check_mark: | กำลังเล่นเพลง [จากสถานีวิทยุ 18k-Radio](https://ecq-studio.com/18K/X/)`));
+				message.channel.send(new MessageEmbed().setColor(radio.config.color).setDescription(`:white_check_mark: | กำลังเล่นเพลง [จากสถานีวิทยุ ${radio.name}](${radio.page})`));
 				if(!player.playing){
 					player.play();
 				}
 			}
 			break;
-			case "TRACK_LOADED":
-			{
+			case "TRACK_LOADED": {
 				await player.queue.add(res.tracks[0]);
-				message.channel.send(new MessageEmbed().setColor('YELLOW').setDescription(`:white_check_mark: | กำลังเล่นเพลง [จากสถานีวิทยุ 18k-Radio](https://ecq-studio.com/18K/X/)`));
+				message.channel.send(new MessageEmbed().setColor(radio.config.color).setDescription(`:white_check_mark: | กำลังเล่นเพลง [จากสถานีวิทยุ ${radio.name}](${radio.page})`));
 				if(!player.playing){
 					player.play();
 				}
@@ -1056,12 +1111,14 @@ const filter = async(client, message, args) =>{
 	}
 }
 const setup = async(client, message, args) =>{
-	if (!message.member.hasPermission("ADMINISTRATOR")) return message.channel.send("**คุณไม่มีสิทธิพอน่ะ ต้องการยศ [ADMINISTRATOR] เพื่อใช้คำสั่งนี้้**");
+	if(!message.member.hasPermission("ADMINISTRATOR")) return message.channel.send("**คุณไม่มีสิทธิพอน่ะ ต้องการยศ [ADMINISTRATOR] เพื่อใช้คำสั่งนี้้**");
+	const getChannel = await db.get(`music_${message.guild.id}_channel`);
+	const channel = message.guild.channels.cache.get(getChannel);
+	if(channel) return message.channel.send('⚠ | คุณได้ทำการตั้งค่าช่องสำหรับขอเพลงเอาไว้เรียบร้อยเเล้วน่ะ');
 	try{
 		await message.guild.channels.create(`${client.user.username}-Music`,{
 			type: `text`
-		})
-		.then(async (channel) => {
+		}).then( async(channel) =>{
 			await db.set(`music_${message.guild.id}_channel`,channel.id);
 			const trackEmbed = new MessageEmbed()
                 .setColor(config.Music.embed.default.color)
@@ -1111,8 +1168,17 @@ const setup = async(client, message, args) =>{
 			await channel.send(config.Music.embed.default.banner);
 			await channel.send('**คิวเพลง:**\nเข้าช่องเสียง และพิมพ์ชื่อเพลงหรือลิงก์ของเพลง เพื่อเปิดเพลงน่ะ').then(async(msg) => await db.set(`music_${message.guild.id}_queue_message`, msg.id));
             await channel.send(trackEmbed, {components: [row, row2]}).then(async(msg) => await db.set(`music_${message.guild.id}_track_message`, msg.id));
-            //await channel.setTopic(``);
-			await message.channel.send(':white_check_mark: ทำการตั้งค่าระบบเพลงเรียบร้อยเเล้ว');
+			await channel.setTopic(`
+⏯ | หยุดเพลง หรือ เล่นเพลงต่อ
+⏭ | ข้ามเพลง
+⏹ | ปิดเพลง
+🔁 | เปิด/ปิด การใช้งานวนซ้ำ
+🔀 | สลับคิวเพลง
+🔉 | ลดเสียง
+🔊 | เพิ่มเสียง
+🔈 | ปิด/เปิดเสียง
+`);
+			await message.channel.send(':white_check_mark: | ทำการตั้งค่าระบบเพลงเรียบร้อยเเล้ว');
 		});
 	}
 	catch(err){
@@ -1313,10 +1379,64 @@ const ping = async(client, message, args) =>{
 			.setFooter(client.user.tag)
 			.setTimestamp();
 		setTimeout(async() =>{
-			await msg.edit(PingEmbed);
+			await msg.edit("᲼",PingEmbed);
 		}, 1500);
 	});
 }
+const remove = async(client, message, args) =>{
+	let channel = message.member.voice.channel;
+	let player = manager.players.get(message.guild.id);
+	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
+	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
+	else if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
+	else if(!player.queue || !player.queue.length || player.queue.length === 0) return message.channel.send('⚠ | คุณยังไม่มีคิวการเล่นมากพอน่ะ');
+	else if(!args[0]) return message.channel.send(`⚠ | โปรดระบุรายการคิวที่ต้องการจะนำออกด้วยน่ะ`);
+	else if(isNaN(args[0])) return message.channel.send(`⚠ | สามารถระบุได้เฉพาะตัวเลขเท่านั้นน่ะ`);
+	else if(Number(args[0]) > player.queue.length) return message.channel.send(`⚠ | ไม่มีรายการคิวที่ \`${args[0]}\` น่ะ ลองเช็คใหม่ดูอีกทีน่ะ`);
+	else {
+		await message.channel.send(`✅ | ทำการลบ \`[${args[0]}] ${player.queue[Number(args[0]) - 1].title}\` เรียบร้อยเเล้ว`);
+		player.queue.remove(Number(args[0]) - 1);
+	}
+}
+const skipto = async(client, message, args) =>{
+	let channel = message.member.voice.channel;
+	let player = manager.players.get(message.guild.id);
+	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
+	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
+	else if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
+	else if(!player.queue || !player.queue.length || player.queue.length === 0) return message.channel.send('⚠ | คุณยังไม่มีคิวการเล่นมากพอน่ะ');
+	else if(!args[0]) return message.channel.send('⚠ | โปรดระบุคิวที่ต้องการจะข้ามไปด้วยน่ะ');
+	else if(isNaN(args[0])) return message.channel.send('⚠ | สามารถระบุได้เฉพาะตัวเลขเท่านั้นน่ะ');
+	else if(Number(args[0]) > player.queue.length) return message.channel.send(`⚠ | ไม่มีรายการคิวที่ \`${args[0]}\` น่ะ ลองเช็คใหม่ดูอีกทีน่ะ`);
+	else {
+		await message.channel.send(`✅ | ทำการข้ามเพลงไปที่เพลง \`[${args[0]}] ${player.queue[Number(args[0]) - 1].title}\` เรียบร้อยเเล้ว`);
+		player.queue.remove(0, Number(args[0]) - 1);
+		player.stop();
+	}
+}
+/*const move = async(client, message, args) =>{
+	let channel = message.member.voice.channel;
+	let player = manager.players.get(message.guild.id);
+	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
+	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
+	else if(!player || !player.queue.current) return message.channel.send('⚠ | ยังไม่มีการเล่นเพลง ณ ตอนนี้เลยน่ะ');
+	else if(!player.queue || !player.queue.length || player.queue.length === 0) return message.channel.send('⚠ | คุณยังไม่มีคิวการเล่นมากพอน่ะ');
+	else if(!args[0] || !args[1]) return message.channel.send(`⚠ | โปรดระบุคิวที่ต้องการจะสลับด้วยน่ะ เช่น\`${await get_prefix(message.guild.id)}move  < คิวที่ต้องการย้าย >  < ย้ายไปตำเเหน่งที่? >\``);
+	else if(isNaN(args[0]) || isNaN(args[1])) return message.channel.send('⚠ | สามารถระบุได้เฉพาะตัวเลขเท่านั้นน่ะ');
+	else if(parseInt(args[0] - 1) < 1 || parseInt(args[0] - 1) > player.queue.length - 1) return message.channel.send(`⚠ | ไม่พบคิวที่ \`${args[0]}\` น่ะ`);
+	else if(parseInt(args[1] - 1) < 0 || parseInt(args[1] - 1) > player.queue.length - 1) return message.channel.send(`⚠ | ไม่พบตำเเหน่งคิวที่ \`${args[1]}\` น่ะ`);
+	else {
+		await message.channel.send(new MessageEmbed()
+			.setColor(embed_config.color)
+			.setTitle(`✅ | ทำการสลับคิวเพลงเรียบร้อย`)
+			.setDescription(`\`[${args[0]}] ${player.queue[parseInt(args[0] - 1)].title}\`\n\n	⬇	⬇\n\nย้ายมาคิวที่ \`[${args[1]}]\``)
+			.setFooter(client.user.tag)
+			.setTimestamp()
+		);
+		player.queue.splice(parseInt(args[0] - 1), 1);
+		player.queue.splice(parseInt(args[1] - 1), 0, player.queue[parseInt(args[0] - 1)]);
+	}
+}*/
 //========================= voice channel Event =========================
 client.on('voiceStateUpdate', async(oldState, newState) =>{
 	let player = await manager.players.get(newState.guild.id);
@@ -1582,13 +1702,22 @@ process.on('uncaughtExceptionMonitor', async(err, origin) =>{
 //========================= Login To Bot ========================= 
 client.login(token);
 
+//========================= web App ========================= 
+app.get('/' , async(req, res) =>{
+	res.send('Bot Is Working!')
+});
+app.listen(config.port, async() =>{
+  	console.log(chalk.bold.yellowBright('[Web-App] ') + chalk.bold.white(`App Is Listening On Port : `) + chalk.bold.yellowBright(config.port));
+	console.log(chalk.bold.yellowBright('[Web-App] ') + chalk.bold.white(`Access App By Use : `) + chalk.bold.cyanBright(`http://127.0.0.1:${config.port}`) + chalk.bold.white(' or ') + chalk.bold.cyanBright(`http://localhost:${config.port}`));
+});
+
 //=========================== Utils ============================================
 
 function convertTime(duration){
 	var milliseconds = parseInt((duration % 1000) / 100);
 	var	seconds = parseInt((duration / 1000) % 60);
 	var	minutes = parseInt((duration / (1000 * 60)) % 60);
-	var hours = parseInt((duration / (1000 * 60 *60)) % 24);
+	var hours = parseInt((duration / (1000 * 60 * 60)) % 24);
 
 	hours = (hours < 10) ? "0" + hours : hours;
 	minutes = (minutes < 10) ? "0" + minutes : minutes;
@@ -1642,7 +1771,7 @@ function track_msg_Embed_loop(client, player, loop){
 	}
 	return embed;
 }
-function queue_msg(client, player){ // fix bug
+function queue_msg(client, player){
 	let Queue_message = `**คิวเพลง: [${player.queue.length}]**\n`;
 	let return_Queue_message;
 	let i;
@@ -1712,16 +1841,33 @@ async function get_Lyrics(client, player){
 async function get_prefix(guild_id){
 	let PREFIX;
     try {
-        let fetched = await db.get(`prefix_${guild_id}`);
-        if (fetched == null) {
+        const fetched = await db.get(`prefix_${guild_id}`);
+        if(fetched == null){
             PREFIX = prefix;
         }
         else {
             PREFIX = fetched;
         }
-		return PREFIX;
+		return await PREFIX;
     } 
     catch (e) {
         console.log(e);
     };
+}
+function parseBoolean(string){
+    switch(string.toLowerCase().trim()){
+        case "true": 
+        case "yes": 
+        case "1": 
+          	return true;
+
+        case "false": 
+        case "no": 
+        case "0": 
+        case null: 
+          	return false;
+
+        default: 
+          	return Boolean(string);
+    }
 }
