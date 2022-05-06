@@ -1,8 +1,8 @@
 # Music-bot-with-request-channel
--- เปลียนชื่อ `example.env` => `.env` 
+เปลียนชื่อ `example.env` => `.env` 
 -- ใส่สิ่งที่จำเป็นทั้งหมด 
   1) token 
-  2) prefix 
+  2) prefix\n 
   3) idเจ้าของ 
   4) mongodb 
   5) port(เลข 4 ตัวอะไรก็ได้) 
