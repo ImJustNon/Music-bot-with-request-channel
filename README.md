@@ -1,6 +1,6 @@
 # Music-bot-with-request-channel
-1 เปลียนชื่อ `example.env` => `.env` 
-2 ใส่สิ่งที่จำเป็นทั้งหมด 
+1) เปลียนชื่อ `example.env` => `.env` 
+2) ใส่สิ่งที่จำเป็นทั้งหมด 
   1) token 
   2) prefix 
   3) idเจ้าของ 
