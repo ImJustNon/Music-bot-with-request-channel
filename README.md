@@ -1,6 +1,6 @@
 # Music-bot-with-request-channel
 
-##How To ใช้##
+## How To ใช้ ##
 1) เปลียนชื่อ `example.env` => `.env` 
 2) ใส่สิ่งที่จำเป็นทั้งหมด 
   - token 
