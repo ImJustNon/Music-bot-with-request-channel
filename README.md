@@ -10,3 +10,6 @@
   - port(เลข 4 ตัวอะไรก็ได้) 
   - host-port-pass-secureคือLavalinkเลือกได้ใน `lavalink_server.js` 
   - spotifyID-spotifySecret(ใน[spotify dev hub](https://developer.spotify.com/dashboard/login))
+
+3) yarn start หากยังไม่มี **yarn** => `npm install -g yarn`
+4) พิมพ์คำสั่ง help ได้เลย 
