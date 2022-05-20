@@ -81,10 +81,10 @@ const moment = require("moment");
 require("moment-duration-format");
 const os = require("os");
 const si = require("systeminformation");
-const express = require('express');
+//const express = require('express');
 
 const GeniusLyrics = new Genius.Client(config.Music.api.Genius_Lyrics_Api);
-const app = express();
+//const app = express();
 //========================= Create Client =========================
 const client = new Client();
 //========================= Import Discord-butons ========================= 
@@ -1703,13 +1703,13 @@ process.on('uncaughtExceptionMonitor', async(err, origin) =>{
 client.login(token);
 
 //========================= web App =========================
-app.get('/' , async(req, res) =>{
+/*app.get('/' , async(req, res) =>{
 	res.send('Bot Is Working!')
 });
 app.listen(config.port, async() =>{  	console.log(chalk.bold.yellowBright('[Web-App] ') + chalk.bold.white(`App Is Listening On Port : `) + chalk.bold.yellowBright(config.port));
 	console.log(chalk.bold.yellowBright('[Web-App] ') + chalk.bold.white(`Access App By Use : `) + chalk.bold.cyanBright(`http://127.0.0.1:${config.port}`) + chalk.bold.white(' or ') + chalk.bold.cyanBright(`http://localhost:${config.port}`));
 });
-
+*/
 //=========================== Utils ============================================
 
 function convertTime(duration){
