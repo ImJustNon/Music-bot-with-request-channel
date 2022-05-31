@@ -81,10 +81,10 @@ const moment = require("moment");
 require("moment-duration-format");
 const os = require("os");
 const si = require("systeminformation");
-const express = require('express');
+//const express = require('express');
 
 const GeniusLyrics = new Genius.Client(config.Music.api.Genius_Lyrics_Api);
-const app = express();
+//const app = express();
 //========================= Create Client =========================
 const client = new Client();
 //========================= Import Discord-butons ========================= 
