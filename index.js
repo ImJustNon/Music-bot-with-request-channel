@@ -81,10 +81,10 @@ const moment = require("moment");
 require("moment-duration-format");
 const os = require("os");
 const si = require("systeminformation");
-//const express = require('express');
+const express = require('express');
 
 const GeniusLyrics = new Genius.Client(config.Music.api.Genius_Lyrics_Api);
-//const app = express();
+const app = express();
 //========================= Create Client =========================
 const client = new Client();
 //========================= Import Discord-butons ========================= 
@@ -969,7 +969,7 @@ const radio = async(client, message, args) =>{
 	let player = manager.players.get(message.guild.id);
 	if(!channel) return message.channel.send('⚠ | โปรดเข้าห้องเสียงก่อนใช้คำสั่งน่ะ');
 	else if(message.guild.me.voice.channel && !channel.equals(message.guild.me.voice.channel)) return message.channel.send('⚠ | ดูเหมือนว่าคุณจะไม่ได้อยู่ช่องเสียงเดียวกันน่ะ');
-	else if(player.playing) return message.channel.send('⚠ | โปรดปิดเพลงทำกำลังเปิด ก่อนใช้คำสั่งนี้น่ะ');
+	else if(player) return message.channel.send('⚠ | โปรดปิดเพลงทำกำลังเปิด ก่อนใช้คำสั่งนี้น่ะ');
 	else{
 		if(!player){
 			player = manager.create({
@@ -980,38 +980,42 @@ const radio = async(client, message, args) =>{
 				selfMute: false,
 				volume: 80,
 			});
-		}
-		if(player.state !== 'CONNECTED') player.connect();
+		}	
 		let embed = new MessageEmbed()
 			.setColor(embed_config.color)
 			.setTitle(`คุณสามารถเลือกเปิดเพลงจากสถานีวิทยุได้จากตัวเลือกด้านล่างได้เลยน่ะ`)
 			.setFooter(client.user.tag)
 			.setTimestamp()
 		let b18k = new MessageMenuOption()
-            .setLabel('หน้าหลัก')
+            .setLabel('18k-RADIO')
             .setEmoji('👑')
             .setValue('18k')
             .setDescription('[เปิดเพลงจากสถานี 18K-RADIO]')
+		let random = new MessageMenuOption()
+            .setLabel('Random')
+            .setEmoji('🎊')
+            .setValue('random')
+            .setDescription('[สูุ่มเลือกสถานีวิทยุ]')
 		let select = new MessageMenu()
             .setID('selector')
             .setPlaceholder('กดเพื่อดูสถานีวิทยุทั้งหมด')
             .setMaxValues(1)
             .setMinValues(1)
-            .addOptions(b18k)
+            .addOptions(b18k, random)
 		const Sendmenu = await message.channel.send(embed, select);
         const filter = ( button ) => button.clicker.id === message.author.id;
 		const collector = Sendmenu.createMenuCollector(filter, { time : 30000 });
 		collector.on("collect", async(b, menu) =>{   
 			if(b.values[0] === "18k"){
-				playRadio(radioStation[0]);
+				playRadio(radioStation[0], Sendmenu);
 			}
 			if(b.values[0] === "random"){
-				playRadio(radioStation[Math.floor(Math.random() * radioStation.length)]);
+				playRadio(radioStation[Math.floor(Math.random() * radioStation.length)], Sendmenu);
 			}
-			await b.reply.defer();
 		});
 	}
-	async function playRadio(radio){
+	async function playRadio(radio, msg){
+		if(player.state !== 'CONNECTED') player.connect();
 		let res = await manager.search(radio.url, message.author);
 		switch(res.loadType){
 			case "LOAD_FAILED": {
@@ -1036,6 +1040,7 @@ const radio = async(client, message, args) =>{
 			}
 			break;
 		}
+		await msg.delete();
 	}
 }
 const clearQueue = async(client, message, args) =>{
@@ -1708,8 +1713,8 @@ client.login(token);
 });
 app.listen(config.port, async() =>{  	console.log(chalk.bold.yellowBright('[Web-App] ') + chalk.bold.white(`App Is Listening On Port : `) + chalk.bold.yellowBright(config.port));
 	console.log(chalk.bold.yellowBright('[Web-App] ') + chalk.bold.white(`Access App By Use : `) + chalk.bold.cyanBright(`http://127.0.0.1:${config.port}`) + chalk.bold.white(' or ') + chalk.bold.cyanBright(`http://localhost:${config.port}`));
-});
-*/
+});*/
+
 //=========================== Utils ============================================
 
 
