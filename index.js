@@ -111,14 +111,14 @@ const Facebook = require("erela.js-facebook");
 const manager = new Manager({
 	nodes: config.Music.nodes,
 	plugins: [
-		new Filter(),
-		new Deezer(),
-		new AppleMusic(),
-		new Facebook(),
-		new Spotify({
-			clientID: config.Music.spotify.clientID,
-			clientSecret: config.Music.spotify.clientSecret,
-		}),
+		// new Filter(),
+		// new Deezer(),
+		// new AppleMusic(),
+		// new Facebook(),
+		// new Spotify({
+		// 	clientID: config.Music.spotify.clientID,
+		// 	clientSecret: config.Music.spotify.clientSecret,
+		// }),
 	],
 	send(id, payload) {
 		const guild = client.guilds.cache.get(id);
